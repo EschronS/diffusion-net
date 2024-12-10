@@ -1,0 +1,45 @@
+# Base image with Python 3.8
+# FROM python:3.8-slim
+FROM pytorch/pytorch:1.8.1-cuda11.1-cudnn8-runtime
+
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
+# Install system-level dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libffi-dev \
+    libstdc++6 \
+    libgcc1 \
+    libssl-dev \
+    ncurses-base \
+    # libncurses6 \
+    tk \
+    sqlite3 \
+    zlib1g \
+    xz-utils \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Copy Python dependencies list
+COPY ./experiments/classification_shrec11/requirements.txt /tmp/requirements.txt
+COPY ./experiments/classification_shrec11/data /app/data
+COPY ./experiments/classification_shrec11/classification_shrec11.py /app/classification_shrec11.py
+COPY ./experiments/classification_shrec11/shrec11_dataset.py /app/shrec11_dataset.py
+COPY ./experiments/classification_shrec11/test.py /app/test.py
+COPY ./src /app/src
+# COPY ../../environment.yml /tmp/environment.yml
+
+# Set PYTHONPATH to include the folder containing the dependency
+ENV PYTHONPATH="/app/src:${PYTHONPATH}"
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r /tmp/requirements.txt
+
+# Set the working directory
+WORKDIR /app
+
+# Copy application code into the container (if any)
+COPY . /app
+
+# Default command (modify if necessary)
+CMD ["python"]
