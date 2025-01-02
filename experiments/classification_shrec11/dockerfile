@@ -7,7 +7,7 @@ ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
 # Install system-level dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
     libffi-dev \
     libstdc++6 \
     libgcc1 \
@@ -17,9 +17,20 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     tk \
     sqlite3 \
     zlib1g \
-    tmux \
     xz-utils \
-    && apt-get clean && rm -rf /var/lib/apt/lists/*
+    tmux \
+    git \
+    zsh \
+    curl \
+    && apt-get clean # && rm -rf /var/lib/apt/lists/*
+
+# RUN apt install -y --no-install-recommends \
+#     fzf \
+#     nvim \
+#     && apt clean
+
+# add zsh as default shell
+RUN chsh -s $(which zsh)
 
 # Copy Python dependencies list
 COPY ./experiments/classification_shrec11/requirements.txt /tmp/requirements.txt
