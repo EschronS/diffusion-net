@@ -10,8 +10,7 @@ sys.path.append(
     os.path.join(os.path.dirname(__file__), "../../src/")
 )  # add the path to the DiffusionNet src
 import diffusion_net
-from shrec11_dataset import Shrec11MeshDataset_Simplified, Shrec11MeshDataset_Original
-
+from load_scanobj import ScanObjectDataset
 
 # === Options
 
@@ -23,18 +22,18 @@ parser.add_argument(
     help="what features to use as input ('xyz' or 'hks') default: hks",
     default="hks",
 )
-parser.add_argument(
-    "--dataset_type",
-    type=str,
-    help="which variant of the dataset to use ('original', or 'simplified') default: original",
-    default="original",
-)
-parser.add_argument(
-    "--split_size",
-    type=int,
-    help="how large of a training set per-class default: 10",
-    default=10,
-)
+# parser.add_argument(
+#     "--dataset_type",
+#     type=str,
+#     help="which variant of the dataset to use ('original', or 'simplified') default: original",
+#     default="original",
+# )
+# parser.add_argument(
+#     "--split_size",
+#     type=int,
+#     help="how large of a training set per-class default: 10",
+#     default=10,
+# )
 args = parser.parse_args()
 
 # system things
@@ -42,7 +41,7 @@ device = torch.device("cuda:0")
 dtype = torch.float32
 
 # problem/dataset things
-n_class = 30
+n_class = 15
 
 # model
 input_features = args.input_features  # one of ['xyz', 'hks']
@@ -61,44 +60,22 @@ label_smoothing_fac = 0.2
 base_path = os.path.dirname(__file__)
 op_cache_dir = os.path.join(base_path, "data", "op_cache")
 
-if args.dataset_type == "simplified":
-    dataset_path = os.path.join(base_path, "data/simplified")
-elif args.dataset_type == "original":
-    dataset_path = os.path.join(base_path, "data/original")
-else:
-    raise ValueError("Unrecognized dataset type")
+dataset_path = base_path
+# raise ValueError("Unrecognized dataset type")
 
 
 # === Load datasets
 
 # Train dataset
-if args.dataset_type == "simplified":
-    train_dataset = Shrec11MeshDataset_Simplified(
-        dataset_path, split_size=args.split_size, k_eig=k_eig, op_cache_dir=op_cache_dir
-    )
-elif args.dataset_type == "original":
-    train_dataset = Shrec11MeshDataset_Original(
-        dataset_path, split_size=args.split_size, k_eig=k_eig, op_cache_dir=op_cache_dir
-    )
+train_dataset = ScanObjectDataset(
+    dataset_path, k_eig=k_eig, test=False, op_cache_dir=op_cache_dir
+)
 train_loader = DataLoader(train_dataset, batch_size=None, shuffle=True)
 
 # Test dataset
-if args.dataset_type == "simplified":
-    test_dataset = Shrec11MeshDataset_Simplified(
-        dataset_path,
-        split_size=None,
-        k_eig=k_eig,
-        op_cache_dir=op_cache_dir,
-        exclude_dict=train_dataset.entries,
-    )
-elif args.dataset_type == "original":
-    test_dataset = Shrec11MeshDataset_Original(
-        dataset_path,
-        split_size=None,
-        k_eig=k_eig,
-        op_cache_dir=op_cache_dir,
-        exclude_dict=train_dataset.entries,
-    )
+test_dataset = ScanObjectDataset(
+    dataset_path, k_eig=k_eig, test=True, op_cache_dir=op_cache_dir
+)
 test_loader = DataLoader(test_dataset, batch_size=None)
 
 
