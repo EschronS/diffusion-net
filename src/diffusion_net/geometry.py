@@ -422,6 +422,7 @@ def compute_operators(verts, faces, k_eig, normals=None):
 
 def get_all_operators(verts_list, faces_list, k_eig, op_cache_dir=None, normals=None):
     N = len(verts_list)
+    is_cloud = len(faces_list) == 0
 
     frames = [None] * N
     massvec = [None] * N
@@ -444,14 +445,14 @@ def get_all_operators(verts_list, faces_list, k_eig, op_cache_dir=None, normals=
         if normals is None:
             outputs = get_operators(
                 verts_list[i],
-                faces_list[i],
+                faces_list if is_cloud else faces_list[i],
                 k_eig,
                 op_cache_dir,
             )
         else:
             outputs = get_operators(
                 verts_list[i],
-                faces_list[i],
+                faces_list if is_cloud else faces_list[i],
                 k_eig,
                 op_cache_dir,
                 normals=normals[i],
