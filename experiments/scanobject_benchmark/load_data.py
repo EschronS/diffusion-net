@@ -38,10 +38,20 @@ class ScanOjectDataset(Dataset):
 
         # store in memory
         self.verts_list = []
-        self.faces_list = []
+        self.faces_list = torch.tensor([])
         self.labels_list = []
 
-        pa = os.path.join(root_dir, "test" if test else "train")
+        pa = os.path.join(
+            root_dir,
+            "data",
+            "h5_files",
+            "main_split_nobg",
+        )
+        if test:
+            pa = os.path.join(pa, "test_objectdataset.h5")
+        else:
+            pa = os.path.join(pa, "training_objectdataset.h5")
+
         # data (2039, 2048, 3)
         # labels (2039)
         data, labels = load_h5_file(pa)
@@ -58,7 +68,7 @@ class ScanOjectDataset(Dataset):
 
         for ind, label in enumerate(self.labels_list):
             self.labels_list[ind] = torch.tensor(label)
-
+        # self.faces_list = torch.tensor(self.faces_list)
         # Precompute operators
         (
             self.frames_list,
@@ -74,9 +84,32 @@ class ScanOjectDataset(Dataset):
             k_eig=self.k_eig,
             op_cache_dir=self.op_cache_dir,
         )
+        print("one precompute done")
+
+    def __len__(self):
+        return len(self.verts_list)
+
+    def __getitem__(self, idx):
+        return (
+            self.verts_list[idx],
+            self.faces_list[idx],
+            self.frames_list[idx],
+            self.massvec_list[idx],
+            self.L_list[idx],
+            self.evals_list[idx],
+            self.evecs_list[idx],
+            self.gradX_list[idx],
+            self.gradY_list[idx],
+            self.labels_list[idx],
+        )
 
 
-da, la = load_h5_file("data/h5_files/main_split_nobg/training_objectdataset.h5")
+# da, la = load_h5_file("data/h5_files/main_split_nobg/training_objectdataset.h5")
 # print(len(da))
-print(np.array(da[0]))
-print(la[2248])
+# print(np.array(da[0]))
+# print(la[2248])
+
+base_path = os.path.dirname(__file__)
+op_cache_dir = os.path.join(base_path, "data", "op_cache")
+dl = ScanOjectDataset(base_path, k_eig=128, test=False, op_cache_dir=op_cache_dir)
+print("load succ")
